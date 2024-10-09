@@ -1,22 +1,22 @@
 use std::marker::PhantomData;
 
-use hecs::{Component, DynamicBundle, Entity, EntityBuilder, World};
-use hecs_schedule::{CommandBuffer, GenericWorld};
+use moss_hecs::{Component, DynamicBundle, Entity, EntityBuilder, Frame};
+use moss_hecs_schedule::{CommandBuffer, GenericWorld};
 use once_cell::sync::OnceCell;
 
 use crate::{HierarchyMut, TreeBuilderClone};
 
-/// Ergonomically construct trees without knowledge of world.
+/// Ergonomically construct trees without knowledge of frame.
 ///
-/// This struct builds the world using [EntityBuilder](hecs::EntityBuilder)
+/// This struct builds the frame using [EntityBuilder](moss_hecs::EntityBuilder)
 ///
 /// # Example
 /// ```rust
-/// use hecs_hierarchy::*;
-/// use hecs::*;
+/// use moss_hecs_hierarchy::*;
+/// use moss_hecs::*;
 ///
 /// struct Tree;
-/// let mut world = World::default();
+/// let mut frame = Frame::default();
 /// let mut builder = TreeBuilder::<Tree>::from(("root",));
 /// builder.attach(("child 1",));
 /// builder.attach({
@@ -25,15 +25,15 @@ use crate::{HierarchyMut, TreeBuilderClone};
 ///     builder
 /// });
 
-/// let root = builder.spawn(&mut world);
+/// let root = builder.spawn(&mut frame);
 
-/// assert_eq!(*world.get::<&&'static str>(root).unwrap(), "root");
+/// assert_eq!( frame.get::<&&'static str>(root).unwrap(), "root");
 
-/// for (a, b) in world
+/// for (a, b) in frame
 ///     .descendants_depth_first::<Tree>(root)
 ///     .zip(["child 1", "child 2"])
 /// {
-///     assert_eq!(*world.get::<&&str>(a).unwrap(), b)
+///     assert_eq!( frame.get::<&&str>(a).unwrap(), b)
 /// }
 ///
 /// ```
@@ -56,34 +56,34 @@ impl<T: Component> TreeBuilder<T> {
     }
 
     /// Reserve the entity which this node will spawn
-    pub fn reserve(&self, world: &impl GenericWorld) -> Entity {
-        *self.reserved.get_or_init(|| world.reserve())
+    pub fn reserve(&self, frame: &impl GenericWorld) -> Entity {
+        *self.reserved.get_or_init(|| frame.reserve())
     }
 
-    /// Spawn the whole tree into the world
-    pub fn spawn(&mut self, world: &mut World) -> Entity {
-        let parent = self.reserve(world);
+    /// Spawn the whole tree into the frame
+    pub fn spawn(&mut self, frame: &mut Frame) -> Entity {
+        let parent = self.reserve(frame);
         let builder = self.builder.build();
-        world.insert(parent, builder).unwrap();
+        frame.insert(parent, builder).unwrap();
 
         for mut child in self.children.drain(..) {
-            let child = child.spawn(world);
-            world.attach::<T>(child, parent).unwrap();
+            let child = child.spawn(frame);
+            frame.attach::<T>(child, parent).unwrap();
         }
 
         parent
     }
 
     /// Spawn the whole tree into a commandbuffer.
-    /// The world is required for reserving entities.
-    pub fn spawn_deferred(&mut self, world: &impl GenericWorld, cmd: &mut CommandBuffer) -> Entity {
-        let parent = self.reserve(world);
+    /// The frame is required for reserving entities.
+    pub fn spawn_deferred(&mut self, frame: &impl GenericWorld, cmd: &mut CommandBuffer) -> Entity {
+        let parent = self.reserve(frame);
         let builder = self.builder.build();
         cmd.insert(parent, builder);
 
         for mut child in self.children.drain(..) {
-            let child = child.spawn_deferred(world, cmd);
-            cmd.write(move |w: &mut World| {
+            let child = child.spawn_deferred(frame, cmd);
+            cmd.write(move |w: &mut Frame| {
                 w.attach::<T>(child, parent).unwrap();
             });
         }

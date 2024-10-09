@@ -1,47 +1,47 @@
 use std::error::Error;
 
-use hecs::{Entity, World};
-use hecs_hierarchy::*;
+use moss_hecs::{Entity, Frame};
+use moss_hecs_hierarchy::*;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Marker type which allows several hierarchies.
     struct Tree;
 
-    let mut world = hecs::World::default();
+    let mut frame = moss_hecs::Frame::default();
 
     // Create a root entity, there can be several.
-    let root = world.spawn(("Root",));
+    let root = frame.spawn(("Root",));
 
     // Create a loose entity
-    let child = world.spawn(("Child 1",));
+    let child = frame.spawn(("Child 1",));
 
     // Attaches the child to a parent, in this case `root`
-    world.attach::<Tree>(child, root).unwrap();
+    frame.attach::<Tree>(child, root).unwrap();
 
     // Iterate children
-    for child in world.children::<Tree>(root) {
-        let name = world.get::<&&str>(child).unwrap();
+    for child in frame.children::<Tree>(root) {
+        let name = frame.get::<&&str>(child).unwrap();
         println!("Child: {:?} {}", child, *name);
     }
 
     // Add a grandchild
-    world.attach_new::<Tree, _>(child, ("Grandchild",)).unwrap();
+    frame.attach_new::<Tree, _>(child, ("Grandchild",)).unwrap();
 
     // Iterate recursively
-    for child in world.descendants_depth_first::<Tree>(root) {
-        let name = world.get::<&&str>(child).unwrap();
+    for child in frame.descendants_depth_first::<Tree>(root) {
+        let name = frame.get::<&&str>(child).unwrap();
         println!("Child: {:?} {}", child, *name)
     }
 
     // Detach `child` and `grandchild`
-    world.detach::<Tree>(child).unwrap();
+    frame.detach::<Tree>(child).unwrap();
 
-    let child2 = world.attach_new::<Tree, _>(root, ("Child 2",)).unwrap();
+    let child2 = frame.attach_new::<Tree, _>(root, ("Child 2",)).unwrap();
 
     // Reattach as a child of `child2`
-    world.attach::<Tree>(child, child2).unwrap();
+    frame.attach::<Tree>(child, child2).unwrap();
 
-    world.attach_new::<Tree, _>(root, ("Child 3",)).unwrap();
+    frame.attach_new::<Tree, _>(root, ("Child 3",)).unwrap();
 
     // Hierarchy now looks like this:
     // Root
@@ -50,23 +50,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     //           |-------- Child 1
     //                     |-------- Grandchild
 
-    print_tree::<Tree>(&world, root);
+    print_tree::<Tree>(&frame, root);
 
-    world.despawn_all::<Tree>(child2);
+    frame.despawn_all::<Tree>(child2);
 
-    print_tree::<Tree>(&world, root);
+    print_tree::<Tree>(&frame, root);
 
-    world
+    frame
         .iter()
         .for_each(|entity| println!("Entity: {:?}", entity.entity()));
 
     Ok(())
 }
 
-fn print_tree<T: 'static + Send + Sync>(world: &World, root: Entity) {
-    fn internal<T: 'static + Send + Sync>(world: &World, parent: Entity, depth: usize) {
-        for child in world.children::<T>(parent) {
-            let name = world.get::<&&str>(child).unwrap();
+fn print_tree<T: 'static + Send + Sync>(frame: &Frame, root: Entity) {
+    fn internal<T: 'static + Send + Sync>(frame: &Frame, parent: Entity, depth: usize) {
+        for child in frame.children::<T>(parent) {
+            let name = frame.get::<&&str>(child).unwrap();
             println!(
                 "{}|-------- {}",
                 std::iter::repeat(" ")
@@ -75,11 +75,11 @@ fn print_tree<T: 'static + Send + Sync>(world: &World, root: Entity) {
                 *name,
             );
 
-            internal::<T>(world, child, depth + 1)
+            internal::<T>(frame, child, depth + 1)
         }
     }
 
-    let name = world.get::<&&str>(root).unwrap();
+    let name = frame.get::<&&str>(root).unwrap();
     println!("{}", *name);
-    internal::<T>(world, root, 1)
+    internal::<T>(frame, root, 1)
 }

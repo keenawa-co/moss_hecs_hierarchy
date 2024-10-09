@@ -57,48 +57,48 @@
 //!
 //! Example usage:
 //! ```
-//! use hecs_hierarchy::*;
+//! use moss_hecs_hierarchy::*;
 //!
 //! // Marker type which allows several hierarchies.
 //! struct Tree;
 //!
-//! let mut world = hecs::World::default();
+//! let mut frame = moss_hecs::Frame::default();
 //!
 //! // Create a root entity, there can be several.
-//! let root = world.spawn(("Root",));
+//! let root = frame.spawn(("Root",));
 //!
 //! // Create a loose entity
-//! let child = world.spawn(("Child 1",));
+//! let child = frame.spawn(("Child 1",));
 //!
 //! // Attaches the child to a parent, in this case `root`
-//! world.attach::<Tree>(child, root).unwrap();
+//! frame.attach::<Tree>(child, root).unwrap();
 //!
 //! // Iterate children
 //! println!("Iterating children:");
-//! for child in world.children::<Tree>(root) {
-//!     let name = world.get::<&&str>(child).unwrap();
+//! for child in frame.children::<Tree>(root) {
+//!     let name = frame.get::<&&str>(child).unwrap();
 //!     println!("  Child: {:?} {}", child, *name);
 //! }
 //!
 //! // Add a grandchild
-//! world.attach_new::<Tree, _>(child, ("Grandchild",)).unwrap();
+//! frame.attach_new::<Tree, _>(child, ("Grandchild",)).unwrap();
 //!
 //! // Iterate recursively
 //! println!("Iterating descendants recursively:");
-//! for descendant in world.descendants_depth_first::<Tree>(root) {
-//!     let name = world.get::<&&str>(descendant).unwrap();
+//! for descendant in frame.descendants_depth_first::<Tree>(root) {
+//!     let name = frame.get::<&&str>(descendant).unwrap();
 //!     println!("  Descendant: {:?} {}", descendant, *name)
 //! }
 //!
 //! // Detach `child` and `grandchild`
-//! world.detach::<Tree>(child).unwrap();
+//! frame.detach::<Tree>(child).unwrap();
 //!
-//! let child2 = world.attach_new::<Tree, _>(root, ("Child 2",)).unwrap();
+//! let child2 = frame.attach_new::<Tree, _>(root, ("Child 2",)).unwrap();
 //!
 //! // Reattach as a child of `child2`
-//! world.attach::<Tree>(child, child2).unwrap();
+//! frame.attach::<Tree>(child, child2).unwrap();
 //!
-//! world.attach_new::<Tree, _>(root, ("Child 3",)).unwrap();
+//! frame.attach_new::<Tree, _>(root, ("Child 3",)).unwrap();
 //!
 //! // Hierarchy now looks like this:
 //! // Root
@@ -109,8 +109,8 @@
 //!
 //! // Iterate recursively
 //! println!("Iterating descendants recursively:");
-//! for descendant in world.descendants_depth_first::<Tree>(root) {
-//!     let name = world.get::<&&str>(descendant).unwrap();
+//! for descendant in frame.descendants_depth_first::<Tree>(root) {
+//!     let name = frame.get::<&&str>(descendant).unwrap();
 //!     println!("  Descendant: {:?} {}", descendant, *name)
 //! }
 //!
@@ -135,4 +135,4 @@ pub use components::*;
 pub use hierarchy::*;
 pub use iter::*;
 
-pub use hecs_schedule::Error;
+pub use moss_hecs_schedule::Error;

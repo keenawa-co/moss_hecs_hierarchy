@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use hecs::{Entity, View};
-use hecs_schedule::{error::Result, GenericWorld};
+use moss_hecs::{Entity, View};
+use moss_hecs_schedule::{error::Result, GenericWorld};
 
 /// Component of a entity with descendents in hierarchy tree `T`.
 /// Children represent a circular linked list. Since `Parent` and child is generic over a marker
@@ -27,15 +27,15 @@ impl<T: 'static + Send + Sync> Parent<T> {
     }
 
     /// Query the parent's first child.
-    pub fn first_child<W: GenericWorld>(&self, world: &W) -> Result<Entity> {
-        Ok(world.try_get::<Child<T>>(self.last_child)?.next)
+    pub fn first_child<W: GenericWorld>(&self, frame: &W) -> Result<Entity> {
+        Ok(frame.try_get::<Child<T>>(self.last_child)?.next)
     }
 
     /// Query the parent's first child.
     pub fn view_first_child(&self, view: &View<&Child<T>>) -> Result<Entity> {
         Ok(view
             .get(self.last_child)
-            .ok_or_else(|| hecs_schedule::Error::NoSuchEntity(self.last_child))?
+            .ok_or_else(|| moss_hecs_schedule::Error::NoSuchEntity(self.last_child))?
             .next)
     }
     /// Return the parent's last child.

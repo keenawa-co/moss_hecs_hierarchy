@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use hecs::{Component, DynamicBundleClone, Entity, EntityBuilderClone, World};
-use hecs_schedule::{CommandBuffer, GenericWorld};
+use moss_hecs::{Component, DynamicBundleClone, Entity, EntityBuilderClone, Frame};
+use moss_hecs_schedule::{CommandBuffer, GenericWorld};
 use once_cell::sync::OnceCell;
 
 use crate::HierarchyMut;
@@ -26,19 +26,19 @@ impl<T: Component> TreeBuilderClone<T> {
     }
 
     /// Reserve the entity which this node will spawn
-    pub fn reserve(&self, world: &impl GenericWorld) -> Entity {
-        *self.reserved.get_or_init(|| world.reserve())
+    pub fn reserve(&self, frame: &impl GenericWorld) -> Entity {
+        *self.reserved.get_or_init(|| frame.reserve())
     }
 
     /// Spawn the whole tree into the world
-    pub fn spawn(self, world: &mut World) -> Entity {
-        let parent = self.reserve(world);
+    pub fn spawn(self, frame: &mut Frame) -> Entity {
+        let parent = self.reserve(frame);
         let builder = self.builder.build();
-        world.insert(parent, &builder).unwrap();
+        frame.insert(parent, &builder).unwrap();
 
         for child in self.children {
-            let child = child.spawn(world);
-            world.attach::<T>(child, parent).unwrap();
+            let child = child.spawn(frame);
+            frame.attach::<T>(child, parent).unwrap();
         }
 
         parent
@@ -46,14 +46,14 @@ impl<T: Component> TreeBuilderClone<T> {
 
     /// Spawn the whole tree into a commandbuffer.
     /// The world is required for reserving entities.
-    pub fn spawn_deferred(self, world: &impl GenericWorld, cmd: &mut CommandBuffer) -> Entity {
-        let parent = self.reserve(world);
+    pub fn spawn_deferred(self, frame: &impl GenericWorld, cmd: &mut CommandBuffer) -> Entity {
+        let parent = self.reserve(frame);
         let builder = self.builder.build();
         cmd.insert(parent, &builder);
 
         for child in self.children {
-            let child = child.spawn_deferred(world, cmd);
-            cmd.write(move |w: &mut World| {
+            let child = child.spawn_deferred(frame, cmd);
+            cmd.write(move |w: &mut Frame| {
                 w.attach::<T>(child, parent).unwrap();
             });
         }

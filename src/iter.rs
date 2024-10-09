@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, marker::PhantomData};
 
-use hecs::{Component, Entity, QueryBorrow};
-use hecs_schedule::GenericWorld;
+use moss_hecs::{Component, Entity, QueryBorrow};
+use moss_hecs_schedule::GenericWorld;
 use smallvec::{smallvec, SmallVec};
 
 use crate::{Child, Hierarchy, Parent};
@@ -19,12 +19,12 @@ pub struct ChildrenIter<'a, T: Component> {
 
 impl<'a, T: Component> ChildrenIter<'a, T> {
     pub(crate) fn new<W: GenericWorld>(
-        world: &'a W,
+        frame: &'a W,
         num_children: usize,
         current: Option<Entity>,
     ) -> Self {
         Self {
-            query: world.try_query().unwrap(),
+            query: frame.try_query().unwrap(),
             remaining: num_children,
             current,
             marker: PhantomData,
@@ -72,9 +72,9 @@ pub struct AncestorIter<'a, T: Component> {
 }
 
 impl<'a, T: Component> AncestorIter<'a, T> {
-    pub(crate) fn new<W: GenericWorld>(world: &'a W, current: Entity) -> Self {
+    pub(crate) fn new<W: GenericWorld>(frame: &'a W, current: Entity) -> Self {
         Self {
-            query: world.try_query().unwrap(),
+            query: frame.try_query().unwrap(),
             current,
             marker: PhantomData,
         }
@@ -109,15 +109,15 @@ pub struct DepthFirstIterator<'a, T: Component> {
 }
 
 impl<'a, T: Component> DepthFirstIterator<'a, T> {
-    pub(crate) fn new<W: GenericWorld>(world: &'a W, root: Entity) -> Self {
-        let children = world.try_query().unwrap();
-        let mut parents = world.try_query::<&Parent<T>>().unwrap();
+    pub(crate) fn new<W: GenericWorld>(frame: &'a W, root: Entity) -> Self {
+        let children = frame.try_query().unwrap();
+        let mut parents = frame.try_query::<&Parent<T>>().unwrap();
 
         let stack = parents
             .view()
             .get(root)
             .and_then(|parent| {
-                let first_child = parent.first_child(world).ok()?;
+                let first_child = parent.first_child(frame).ok()?;
                 Some(smallvec![StackFrame {
                     current: first_child,
                     remaining: parent.num_children,
@@ -135,7 +135,7 @@ impl<'a, T: Component> DepthFirstIterator<'a, T> {
 }
 
 pub struct DepthFirstVisitor<'a, W, T: Component, F> {
-    world: &'a W,
+    frame: &'a W,
     children: QueryBorrow<'a, &'a Child<T>>,
     parents: QueryBorrow<'a, &'a Parent<T>>,
     marker: PhantomData<T>,
@@ -147,16 +147,16 @@ pub struct DepthFirstVisitor<'a, W, T: Component, F> {
 impl<'a, F: Fn(&W, Entity) -> bool + Component, W: GenericWorld, T: Component>
     DepthFirstVisitor<'a, W, T, F>
 {
-    pub(crate) fn new(world: &'a W, root: Entity, accept: F) -> Self {
-        let children = world.try_query().unwrap();
-        let mut parents = world.try_query::<&Parent<T>>().unwrap();
+    pub(crate) fn new(frame: &'a W, root: Entity, accept: F) -> Self {
+        let children = frame.try_query().unwrap();
+        let mut parents = frame.try_query::<&Parent<T>>().unwrap();
 
         let stack = parents
             .view()
             .get(root)
             .and_then(|parent| {
-                if (accept)(world, root) {
-                    let first_child = parent.first_child(world).ok()?;
+                if (accept)(frame, root) {
+                    let first_child = parent.first_child(frame).ok()?;
                     Some(smallvec![StackFrame {
                         current: first_child,
                         remaining: parent.num_children,
@@ -168,7 +168,7 @@ impl<'a, F: Fn(&W, Entity) -> bool + Component, W: GenericWorld, T: Component>
             .unwrap_or_default();
 
         Self {
-            world,
+            frame,
             accept,
             children,
             parents,
@@ -198,7 +198,7 @@ impl<'a, F: Fn(&W, Entity) -> bool + Component, W: GenericWorld, T: Component> I
                 top.current = data.next;
                 top.remaining -= 1;
 
-                if !(self.accept)(self.world, current) {
+                if !(self.accept)(self.frame, current) {
                     continue;
                 }
 
@@ -259,18 +259,18 @@ impl<'a, T: Component> Iterator for DepthFirstIterator<'a, T> {
 }
 
 pub struct BreadthFirstIterator<'a, W, T> {
-    world: &'a W,
+    frame: &'a W,
     marker: PhantomData<T>,
     queue: VecDeque<Entity>,
 }
 
 impl<'a, W: GenericWorld + Hierarchy, T: 'static + Send + Sync> BreadthFirstIterator<'a, W, T> {
-    pub(crate) fn new(world: &'a W, root: Entity) -> Self {
+    pub(crate) fn new(frame: &'a W, root: Entity) -> Self {
         // Add immediate children of root to queue
-        let queue = world.children::<T>(root).collect();
+        let queue = frame.children::<T>(root).collect();
 
         Self {
-            world,
+            frame,
             queue,
             marker: PhantomData,
         }
@@ -286,7 +286,7 @@ impl<'a, W: GenericWorld + Hierarchy, T: 'static + Send + Sync> Iterator
         let front = self.queue.pop_front()?;
 
         // Add any potention children of front to the back of queue
-        self.queue.extend(self.world.children::<T>(front));
+        self.queue.extend(self.frame.children::<T>(front));
 
         Some(front)
     }

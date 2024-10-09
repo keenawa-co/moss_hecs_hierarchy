@@ -6,16 +6,17 @@
 [![Documentation](https://docs.rs/hecs-hierarchy/badge.svg)](https://docs.rs/hecs-hierarchy)
 [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE-MIT)
 
-Hierarchy implementation for use with the *hecs* ECS.
+Hierarchy implementation for use with the _hecs_ ECS.
 
 ### Features
-- [X] Iterate children of parent
-- [X] Lookup parent of child
-- [X] Traverse hierarchy depth first
-- [X] Traverse hierarchy breadth first
-- [X] Traverse ancestors
-- [X] Detach child from hierarchy
-- [X] Ergonomic tree building
+
+- [x] Iterate children of parent
+- [x] Lookup parent of child
+- [x] Traverse hierarchy depth first
+- [x] Traverse hierarchy breadth first
+- [x] Traverse ancestors
+- [x] Detach child from hierarchy
+- [x] Ergonomic tree building
 - [ ] Reverse iteration
 - [ ] Sorting
 - [ ] (Optional) associated data to relation
@@ -24,7 +25,7 @@ Hierarchy implementation for use with the *hecs* ECS.
 
 An ECS is a fantastic design principle for designing software which allows a
 data oriented design. Most of the time, the ECS is flat with maybe a few
-components referencing each other via `Entity` ids.  Sometimes however, the need
+components referencing each other via `Entity` ids. Sometimes however, the need
 to create and manage proper, well behaved graphs, arises.
 
 This is were hecs-hierarchy comes in and gives the ability to manage directed
@@ -47,26 +48,27 @@ See the [documentation](https://docs.rs/hecs-hierarchy), more specifically the
 trait
 
 Example usage:
+
 ```rust
 use hecs_hierarchy::*;
 
 // Marker type which allows several hierarchies.
 struct Tree;
 
-let mut world = hecs::World::default();
+let mut frame = hecs::World::default();
 
 // Create a root entity, there can be several.
-let root = world.spawn(("Root",));
+let root = frame.spawn(("Root",));
 
 // Create a loose entity
-let child = world.spawn(("Child 1",));
+let child = frame.spawn(("Child 1",));
 
 // Attaches the child to a parent, in this case `root`
 world.attach::<Tree>(child, root).unwrap();
 
 // Iterate children
-for child in world.children::<Tree>(root) {
-    let name = world.get::<&&str>(child).unwrap();
+for child in frame.children::<Tree>(root) {
+    let name = frame.get::<&&str>(child).unwrap();
     println!("Child: {:?} {}", child, *name);
 }
 
@@ -74,15 +76,15 @@ for child in world.children::<Tree>(root) {
 world.attach_new::<Tree, _>(child, ("Grandchild",)).unwrap();
 
 // Iterate recursively
-for child in world.descendants_depth_first::<Tree>(root) {
-    let name = world.get::<&&str>(child).unwrap();
+for child in frame.descendants_depth_first::<Tree>(root) {
+    let name = frame.get::<&&str>(child).unwrap();
     println!("Child: {:?} {}", child, *name)
 }
 
 // Detach `child` and `grandchild`
 world.detach::<Tree>(child).unwrap();
 
-let child2 = world.attach_new::<Tree, _>(root, ("Child 2",)).unwrap();
+let child2 = frame.attach_new::<Tree, _>(root, ("Child 2",)).unwrap();
 
 // Reattach as a child of `child2`
 world.attach::<Tree>(child, child2).unwrap();

@@ -1,7 +1,7 @@
 use std::mem;
 
-use hecs::{Component, DynamicBundle, Entity, QueryBorrow, Without, World};
-use hecs_schedule::{error::Result, GenericWorld};
+use moss_hecs::{Component, DynamicBundle, Entity, Frame, QueryBorrow, Without};
+use moss_hecs_schedule::{error::Result, GenericWorld};
 
 use crate::{
     AncestorIter, BreadthFirstIterator, Child, ChildrenIter, DepthFirstIterator, DepthFirstVisitor,
@@ -78,7 +78,7 @@ where
     fn roots<T: Component>(&self) -> Result<QueryBorrow<Without<&Parent<T>, &Child<T>>>>;
 }
 
-impl HierarchyMut for World {
+impl HierarchyMut for Frame {
     fn attach<T: Component>(&mut self, child: Entity, parent: Entity) -> Result<Entity> {
         let mut maybe_p = self.try_get_mut::<Parent<T>>(parent);
         if let Ok(ref mut p) = maybe_p {
@@ -208,7 +208,7 @@ impl<W: GenericWorld> Hierarchy for W {
         loop {
             match self.parent::<T>(cur) {
                 Ok(val) => cur = val,
-                Err(hecs_schedule::Error::MissingComponent(_, _)) => break,
+                Err(moss_hecs_schedule::Error::MissingComponent(_, _)) => break,
                 Err(val) => return Err(val),
             }
         }
@@ -267,15 +267,15 @@ trait WorldExt {
     fn try_remove_one<C: Component>(&mut self, e: Entity) -> Result<C>;
 }
 
-impl WorldExt for World {
+impl WorldExt for Frame {
     fn try_insert(&mut self, e: Entity, c: impl DynamicBundle) -> Result<()> {
         self.insert(e, c)
-            .map_err(|_| hecs_schedule::Error::NoSuchEntity(e))
+            .map_err(|_| moss_hecs_schedule::Error::NoSuchEntity(e))
     }
 
     fn try_remove_one<C: Component>(&mut self, e: Entity) -> Result<C> {
         self.remove_one::<C>(e)
-            .map_err(|_| hecs_schedule::Error::NoSuchEntity(e))
+            .map_err(|_| moss_hecs_schedule::Error::NoSuchEntity(e))
     }
 }
 
