@@ -1,10 +1,10 @@
-//! # hecs-hierarchy
+//! # moss_hecs_hierarchy
 //!
 //! [![Cargo](https://img.shields.io/crates/v/hecs-hierarchy.svg)](https://crates.io/crates/hecs-hierarchy)
 //! [![Documentation](https://docs.rs/hecs-hierarchy/badge.svg)](https://docs.rs/hecs-hierarchy)
 //! [![LICENSE](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE-MIT)
 //!
-//! Hierarchy implementation for hecs ECS.
+//! Hierarchy implementation for moss_hecs ECS.
 //!
 //! ## Features
 //! - [X] Iterate children of parent
@@ -19,14 +19,14 @@
 //!
 //! ## Getting Started
 //!
-//! Include both `hecs` and `hecs-hierarchy` as dependencies in your `Cargo.toml`.
+//! Include both `moos_` and `moss_hecs_hierarchy` as dependencies in your `Cargo.toml`.
 //!
-//! `hecs-hierarchy` does not re-export `hecs`
+//! `moss_hierarchy` does not re-export `moss_hecs`
 //!
 //! ```toml
 //! [dependencies]
-//! hecs = 0.10
-//! hecs-hierarchy = 0.12
+//! moss_hecs = 0.10
+//! moss_hecshierarchy = 0.12
 //! ```
 //!
 //! ## Motivation

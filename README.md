@@ -1,6 +1,4 @@
-# hecs-hierarchy
-
-## hecs-hierarchy
+# moss_hecs_hierarchy
 
 [![Cargo](https://img.shields.io/crates/v/hecs-hierarchy.svg)](https://crates.io/crates/hecs-hierarchy)
 [![Documentation](https://docs.rs/hecs-hierarchy/badge.svg)](https://docs.rs/hecs-hierarchy)
@@ -50,12 +48,12 @@ trait
 Example usage:
 
 ```rust
-use hecs_hierarchy::*;
+use moss_hecs_hierarchy::*;
 
 // Marker type which allows several hierarchies.
 struct Tree;
 
-let mut frame = hecs::World::default();
+let mut frame = moss_hecs::Frame::default();
 
 // Create a root entity, there can be several.
 let root = frame.spawn(("Root",));
@@ -64,7 +62,7 @@ let root = frame.spawn(("Root",));
 let child = frame.spawn(("Child 1",));
 
 // Attaches the child to a parent, in this case `root`
-world.attach::<Tree>(child, root).unwrap();
+frame.attach::<Tree>(child, root).unwrap();
 
 // Iterate children
 for child in frame.children::<Tree>(root) {
@@ -73,7 +71,7 @@ for child in frame.children::<Tree>(root) {
 }
 
 // Add a grandchild
-world.attach_new::<Tree, _>(child, ("Grandchild",)).unwrap();
+frame.attach_new::<Tree, _>(child, ("Grandchild",)).unwrap();
 
 // Iterate recursively
 for child in frame.descendants_depth_first::<Tree>(root) {
@@ -82,14 +80,14 @@ for child in frame.descendants_depth_first::<Tree>(root) {
 }
 
 // Detach `child` and `grandchild`
-world.detach::<Tree>(child).unwrap();
+frame.detach::<Tree>(child).unwrap();
 
 let child2 = frame.attach_new::<Tree, _>(root, ("Child 2",)).unwrap();
 
 // Reattach as a child of `child2`
-world.attach::<Tree>(child, child2).unwrap();
+frame.attach::<Tree>(child, child2).unwrap();
 
-world.attach_new::<Tree, _>(root, ("Child 3",)).unwrap();
+frame.attach_new::<Tree, _>(root, ("Child 3",)).unwrap();
 
 // Hierarchy now looks like this:
 // Root
